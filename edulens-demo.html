@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduLens · AI作文分镜助手（演示版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #14161f;
+    --ink-soft: #4a4d5a;
+    --paper: #faf9f6;
+    --paper-card: #ffffff;
+    --line: #e7e5df;
+    --accent-1: #90c98d;
+    --accent-2: #e8b93a;
+    --accent-3: #e2694f;
+    --accent-4: #6fa8c9;
+    --shadow: 0 1px 2px rgba(20,22,31,0.04), 0 8px 24px rgba(20,22,31,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans SC', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{
+    display:flex; align-items:center; gap:14px;
+    padding:22px 28px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .mark{
+    width:44px; height:44px; border-radius:11px;
+    background:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Noto Serif SC'; font-weight:900; font-size:20px;
+    flex-shrink:0;
+  }
+  .brand-name{ font-weight:700; font-size:17px; letter-spacing:0.2px;}
+  .brand-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:1px;}
+  .demo-badge{
+    margin-left:auto; font-size:11.5px; font-weight:700; padding:6px 14px;
+    background:#FEF3C7; color:#92400E; border-radius:100px; border:1px solid #FDE68A;
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+
+  .wrap{ max-width:880px; margin:0 auto; padding:56px 24px 90px;}
+  .hero-eyebrow{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--ink-soft); letter-spacing:1.5px; text-transform:uppercase;
+    justify-content:center; margin-bottom:18px;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after{
+    content:""; width:28px; height:1px; background:var(--line);
+  }
+  h1.hero{
+    font-family:'Noto Serif SC'; font-weight:900;
+    font-size:clamp(28px, 4.2vw, 42px);
+    text-align:center; line-height:1.35; margin:0 0 18px;
+  }
+  p.hero-sub{
+    text-align:center; color:var(--ink-soft); font-size:15.5px; line-height:1.75;
+    max-width:560px; margin:0 auto 32px;
+  }
+  .demo-note{
+    max-width:560px; margin:0 auto 44px; padding:14px 18px;
+    background:#FFFBEB; border:1px solid #FDE68A; border-radius:11px;
+    font-size:13px; color:#92400E; line-height:1.7; text-align:center;
+  }
+
+  .card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+  }
+  .form-card{ padding:34px 34px 28px; }
+  .form-title{ font-size:16px; font-weight:700; margin:0 0 20px; display:flex; align-items:center; gap:8px;}
+  label{ display:block; font-size:13px; color:var(--ink-soft); margin-bottom:8px; font-weight:500;}
+  select{
+    width:100%; padding:14px 16px; font-size:15px;
+    border:1px solid var(--line); border-radius:11px;
+    background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%234a4d5a" stroke-width="2"><path d="M7 10l5 5 5-5"/></svg>') no-repeat right 14px center;
+    appearance:none; -webkit-appearance:none;
+    color:var(--ink); font-family:inherit;
+  }
+  select:focus{ outline:none; border-color:var(--ink); }
+  .field-group{ margin-top:0; }
+
+  button.generate{
+    width:100%; margin-top:26px; padding:16px;
+    background:var(--ink); color:#fff; border:none; border-radius:12px;
+    font-size:15.5px; font-weight:600; font-family:inherit;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
+    transition:transform .12s, background .15s;
+  }
+  button.generate:hover{ background:#000; }
+  button.generate:active{ transform:scale(0.985); }
+
+  .foot-note{
+    border-top:1px solid var(--line); margin-top:24px; padding-top:16px;
+    font-size:12px; color:#9a9a96; line-height:1.8;
+  }
+
+  .spin{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.35); border-top-color:#fff;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .result-shell{ margin-top:28px; padding:70px 34px; text-align:center;}
+  .empty-icon{
+    width:64px; height:64px; margin:0 auto 22px;
+    border-radius:50%; background:#f1f0eb;
+    display:flex; align-items:center; justify-content:center;
+    color:#b5b3ac;
+  }
+  .empty-title{ font-weight:700; font-size:16px; margin-bottom:8px;}
+  .empty-sub{ color:var(--ink-soft); font-size:13.5px; }
+
+  .result{ margin-top:34px; }
+  .result-meta{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    margin-bottom:6px; flex-wrap:wrap;
+  }
+  .result-title{ font-family:'Noto Serif SC'; font-weight:900; font-size:24px; }
+  .result-tags{ display:flex; gap:8px; }
+  .tag{
+    font-size:11.5px; padding:4px 10px; border-radius:100px;
+    border:1px solid var(--line); color:var(--ink-soft); white-space:nowrap;
+  }
+  .theme-box{
+    margin-top:16px; padding:18px 20px; border-radius:13px;
+    background:#f6f5f0; font-size:14.5px; line-height:1.8; color:#33352f;
+    border-left:3px solid var(--ink);
+  }
+  .theme-box b{ display:block; font-size:12px; color:var(--ink-soft); font-weight:600; margin-bottom:5px; letter-spacing:0.5px;}
+
+  .section-label{
+    font-size:12.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--ink-soft); margin:40px 0 16px; display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{ content:""; flex:1; height:1px; background:var(--line); }
+
+  .curve{ display:flex; gap:0; position:relative; padding:6px 0 0;}
+  .curve-node{ flex:1; position:relative; padding:0 10px; }
+  .curve-node:not(:last-child)::after{
+    content:""; position:absolute; top:9px; right:-6px; width:calc(100% - 6px); height:2px;
+    background:linear-gradient(to right, var(--line), var(--line));
+  }
+  .dot{
+    width:20px; height:20px; border-radius:50%; margin-bottom:14px;
+    border:3px solid #fff; box-shadow:0 0 0 2px var(--line);
+    position:relative; z-index:2;
+  }
+  .curve-point{ font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-bottom:3px;}
+  .curve-emotion{ font-size:14.5px; font-weight:700; margin-bottom:6px; }
+  .curve-desc{ font-size:12.5px; color:var(--ink-soft); line-height:1.65;}
+
+  .shot{
+    display:grid; grid-template-columns:64px 1fr; gap:22px;
+    padding:26px 0; border-top:1px dashed var(--line);
+  }
+  .shot:first-of-type{ border-top:1px solid var(--line); }
+  .shot-badge{
+    width:56px; height:56px; border-radius:13px;
+    background:var(--ink); color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:'Noto Serif SC'; font-weight:700;
+  }
+  .shot-badge .num{ font-size:10px; opacity:0.6; }
+  .shot-badge .type{ font-size:15px; margin-top:1px; }
+  .shot-skill{ font-size:15.5px; font-weight:700; margin-bottom:10px;}
+  .shot-example{
+    font-size:14px; line-height:1.85; color:#2b2d24;
+    background:#f6f5f0; padding:14px 16px; border-radius:11px; margin-bottom:14px;
+    font-family:'Noto Serif SC'; font-weight:500;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px;}
+  .chip-label{ font-size:11.5px; color:#a5a39c; margin-right:6px; align-self:center;}
+  .chip{
+    font-size:12.5px; padding:5px 11px; border-radius:8px;
+    background:#fff; border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .chip.sense{ background:#fbf6ea; border-color:#f0e4c4; color:#8a6d1f;}
+  .tip-line{
+    font-size:12.5px; color:var(--ink-soft); margin-top:12px; padding-top:12px;
+    border-top:1px solid var(--line); display:flex; gap:8px; line-height:1.7;
+  }
+  .tip-line b{ color:var(--ink); flex-shrink:0; }
+
+  .mistakes{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px;}
+  .mistakes li{
+    font-size:13.5px; line-height:1.75; color:#33352f;
+    padding:13px 16px; border-radius:10px; background:#fdf3f1; border-left:3px solid var(--accent-3);
+  }
+  .upgrade{
+    padding:18px 20px; border-radius:13px; background:#eef5f0; border-left:3px solid var(--accent-1);
+    font-size:13.5px; line-height:1.8; color:#2b3f31; margin-top:14px;
+  }
+  .upgrade b{ display:block; font-size:12px; color:#4a7a55; margin-bottom:5px; font-weight:700; letter-spacing:0.5px;}
+
+  footer{ text-align:center; color:#b5b3ac; font-size:12px; padding:36px 0 44px; }
+
+  @media (max-width:640px){
+    .form-card{ padding:26px 20px 22px; }
+    .shot{ grid-template-columns:48px 1fr; gap:14px; }
+    .shot-badge{ width:48px; height:48px; border-radius:11px; }
+    .shot-badge .type{ font-size:13px; }
+    .curve{ flex-direction:column; gap:18px; }
+    .curve-node::after{ display:none; }
+    .demo-badge{ margin-left:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="mark">E</div>
+  <div>
+    <div class="brand-name">EduLens</div>
+    <div class="brand-sub">AI作文分镜助手</div>
+  </div>
+  <div class="demo-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    产品原型演示
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero-eyebrow">分镜思维 × 语文教学</div>
+  <h1 class="hero">作文写不具体？试试「分镜法」</h1>
+  <p class="hero-sub">将影视编导的「五镜头语言」迁移至小学作文教学。输入任意题目，AI 自动解析类型并生成分镜。</p>
+  <div class="demo-note">
+    📌 这是产品原型演示版本：下拉选择题目后展示预生成的示例结果，用于展示交互设计与产品逻辑。完整版接入实时 AI 生成能力。
+  </div>
+
+  <div class="card form-card">
+    <div class="form-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4M16 5v4"/></svg>
+      选择示例题目
+    </div>
+
+    <div class="field-group">
+      <label for="demoSelect">作文题目（演示版提供以下 3 个预设示例）</label>
+      <select id="demoSelect">
+        <option value="0">身边那些有特点的人 · 三年级 · 约300字</option>
+        <option value="1">我学会了____ · 四年级 · 约400字</option>
+        <option value="2">让真情自然流露 · 六年级 · 约500字</option>
+      </select>
+    </div>
+
+    <button class="generate" id="genBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <span id="btnLabel">生成分镜板</span>
+    </button>
+
+    <div class="foot-note">
+      基于部编版教材习作体系 × 影视编导分镜法 × Claude Prompt 工程<br>
+      演示版内置示例数据 · 完整版支持任意题目实时生成
+    </div>
+  </div>
+
+  <div id="resultArea">
+    <div class="card result-shell" id="emptyState">
+      <div class="empty-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M7 6v12M17 6v12M2 10h5M2 14h5M17 10h5M17 14h5"/></svg>
+      </div>
+      <div class="empty-title">等待选择</div>
+      <div class="empty-sub">从上方下拉菜单选择一个示例题目，查看分镜板效果</div>
+    </div>
+  </div>
+
+  <footer>EduLens · 教育场景探索 · 独立开发 · 2025</footer>
+</div>
+
+<script>
+const DEMO_DATA = [
+{
+  "meta": {"title": "身边那些有特点的人", "grade": "小学三年级", "word_count": "约300字"},
+  "theme": "通过一件具体的小事，让读者一眼看出这个人最鲜明的特点，而不是靠\"他是个好人\"这种空话",
+  "emotion_curve": [
+    {"point": "开头", "emotion": "好奇/期待", "description": "一出场就让人想问：这个人到底有什么特别的？"},
+    {"point": "发展", "emotion": "惊讶/怀疑", "description": "发生了一件小事，一开始大家可能没当回事，甚至怀疑他做不到"},
+    {"point": "高潮", "emotion": "佩服/惊喜", "description": "这件事让他的特点完全展现出来，大家的想法被改变了"},
+    {"point": "结尾", "emotion": "亲切/喜欢", "description": "重新认识了这个人，对他的特点有了更深的印象"}
+  ],
+  "shots": [
+    {"shot_type": "全景", "writing_skill": "交代人物出场的地方，先给一个整体画面", "example": "教室里，同学们正闹哄哄地讨论着，只有他坐在角落，手里捧着一本书，什么声音都没听见。", "sensory_words": ["闹哄哄", "安安静静", "皱巴巴", "亮堂堂", "空荡荡"], "sentence_starters": ["教室里，", "操场上，", "下课铃一响，"], "teacher_tip": "先想：这个人平时最常出现在哪个地方？在做什么？"},
+    {"shot_type": "中景", "writing_skill": "写人物的一个典型动作，让特点动起来", "example": "他把书往桌上一放，眼睛立刻黏了上去，手指飞快地翻着页，好像在找什么宝贝。", "sensory_words": ["飞快", "轻轻", "使劲", "小心翼翼", "笨拙"], "sentence_starters": ["他一放下书包，就", "只见他", "说着，他就"], "teacher_tip": "把\"他很爱看书\"这句话，换成他看书时手和眼睛在做什么"},
+    {"shot_type": "特写", "writing_skill": "放大最能体现特点的那个瞬间", "example": "他的手指停在一行字上，嘴角忽然翘起来，眼睛眯成一条缝，好像书里藏着什么好笑的事。", "sensory_words": ["眯成一条缝", "翘起来", "睁得圆圆", "红扑扑", "皱起眉头"], "sentence_starters": ["这时，", "我凑近一看，", "就在这一刻，"], "teacher_tip": "这是全文最重要的一句，让学生盯着这个瞬间写3句以上"},
+    {"shot_type": "近景", "writing_skill": "写\"我\"看到这一幕的心里想法", "example": "我看着他，心里想：原来书里真有这么好玩的东西，怪不得他谁叫都听不见。", "sensory_words": ["心里一动", "忍不住", "偷偷地", "悄悄地"], "sentence_starters": ["我心里想，", "看到这里，我", "我忽然明白，"], "teacher_tip": "让学生说说：看到这一幕，你自己心里冒出了什么念头？"},
+    {"shot_type": "空镜", "writing_skill": "结尾用一个小画面收住，不用总结句", "example": "下课铃又响了，他还是没抬头，书页\"沙沙\"地翻着，像在跟时间赛跑。", "sensory_words": ["沙沙", "静悄悄", "慢慢地", "远远地"], "sentence_starters": ["铃声响起，", "阳光照在", "这时候，"], "teacher_tip": "不要写\"他真是个爱读书的人\"，用画面代替总结"}
+  ],
+  "common_mistakes": [
+    "只会说\"他很爱笑\"\"他很勇敢\"这类评价词，却举不出具体的一件事来证明",
+    "把好几件小事都写一遍，每件事都是一两句话带过，读完不知道重点是哪件事"
+  ],
+  "upgrade_tip": "如果基础较好，可以在开头先写一个\"误会\"——大家一开始觉得他不行/很普通，结果这件事让大家改变了看法，制造小小的反差"
+},
+{
+  "meta": {"title": "我学会了____", "grade": "小学四年级", "word_count": "约400字"},
+  "theme": "通过学会一项本领的完整过程，写出\"从不会到会\"中间的挣扎，让读者体会到坚持的不容易",
+  "emotion_curve": [
+    {"point": "开头", "emotion": "羡慕/跃跃欲试", "description": "看到别人会，自己也想学，动机要真实具体"},
+    {"point": "发展", "emotion": "沮丧/想放弃", "description": "第一次尝试失败，遇到具体的困难，情绪跌到低点"},
+    {"point": "高潮", "emotion": "紧张后的惊喜", "description": "某一次突然找到感觉，成功的那一瞬间"},
+    {"point": "结尾", "emotion": "自豪/踏实", "description": "学会之后再回头看，明白了坚持的意义"}
+  ],
+  "shots": [
+    {"shot_type": "全景", "writing_skill": "交代想学这件事的场景和原因", "example": "楼下的空地上，邻居家哥哥骑着自行车\"嗖\"地一下就冲了过去，车铃\"叮铃铃\"响个不停，看得我心里直痒痒。", "sensory_words": ["嗖地", "叮铃铃", "空荡荡", "灰扑扑", "亮闪闪"], "sentence_starters": ["那天下午，", "自从看到", "我一直想学"], "teacher_tip": "让学生说清楚：是看到谁、在什么场景下，才想学这件事的"},
+    {"shot_type": "中景", "writing_skill": "写第一次尝试的具体动作，越具体越好", "example": "我扶着车把，一只脚刚踩上踏板，车身就晃了一下，\"哐当\"一声，我连人带车摔在了地上。", "sensory_words": ["晃悠悠", "哐当", "摇摇晃晃", "咬紧牙", "手心冒汗"], "sentence_starters": ["我扶着", "刚一", "谁知道"], "teacher_tip": "把\"我摔倒了很多次\"拆成一次具体的摔倒，写清楚身体是怎么动的"},
+    {"shot_type": "特写", "writing_skill": "放大学会那一刻的身体感觉和动作", "example": "车轮转得越来越稳，风\"呼呼\"地从耳边掠过，我忽然发现，车把不知什么时候已经不晃了。", "sensory_words": ["呼呼", "稳稳当当", "轻飘飘", "麻酥酥", "咚咚地跳"], "sentence_starters": ["就在这时，", "不知不觉间，", "忽然，"], "teacher_tip": "这是最关键的镜头，让学生仔细回忆：成功的那一秒，身体有什么感觉？"},
+    {"shot_type": "近景", "writing_skill": "写心情从沮丧到惊喜的转变", "example": "我的心一下子提到了嗓子眼，又猛地放了下来，嘴角不受控制地咧开，笑出了声。", "sensory_words": ["提到嗓子眼", "咧开嘴", "心里乐开了花", "眼睛一亮"], "sentence_starters": ["这一刻，我的心", "我忍不住", "我又惊又喜，"], "teacher_tip": "不要直接写\"我很高兴\"，要写身体的反应——笑、跳、喊"},
+    {"shot_type": "空镜", "writing_skill": "结尾用一个画面，暗示学会带来的改变", "example": "夕阳把我的影子拉得老长，车轮压过地面，\"沙沙\"作响，我知道，以后这条路我也能自己骑过去了。", "sensory_words": ["拉得老长", "沙沙作响", "暖洋洋", "轻快"], "sentence_starters": ["夕阳下，", "风一路", "从那以后，"], "teacher_tip": "避免写\"我明白了坚持就是胜利\"，用一个动作或画面代替道理"}
+  ],
+  "common_mistakes": [
+    "把学习过程写成流水账，\"第一次...第二次...第三次...\"平均用力，看不出重点在哪一次尝试",
+    "心情变化只用\"很难过\"\"很开心\"这类词概括，没有写出摔倒时、成功时身体和表情的具体样子"
+  ],
+  "upgrade_tip": "基础较好的学生可以加入一个\"帮助者\"的细节——比如爸爸在后面扶着车、朋友的一句鼓励——通过这个人的一句话或一个动作，侧面烘托自己的心情变化"
+},
+{
+  "meta": {"title": "让真情自然流露", "grade": "小学六年级", "word_count": "约500字"},
+  "theme": "把内心真实的情感藏进具体的人、事、物之中，让读者自己从细节里读出感动，而不是靠直接喊出来",
+  "emotion_curve": [
+    {"point": "开头", "emotion": "平淡/习以为常", "description": "先写日常中不起眼的一幕，情感还没被察觉"},
+    {"point": "发展", "emotion": "触动/若有所思", "description": "一个细节让人开始留意，情感悄悄浮现"},
+    {"point": "高潮", "emotion": "情感涌上心头", "description": "某个瞬间情感集中释放，但仍克制、不喊口号"},
+    {"point": "结尾", "emotion": "怅然/温暖的余韵", "description": "情感沉淀下来，借景物留下悠长的回味"}
+  ],
+  "shots": [
+    {"shot_type": "全景", "writing_skill": "用一个日常场景做铺垫，情感先藏而不露", "example": "清晨的厨房里，锅铲碰着锅沿发出「叮叮」的声响，妈妈的背影在雾气中忽隐忽现，像每一个平常的早晨一样。", "sensory_words": ["雾气缭绕", "忽隐忽现", "叮叮当当", "微凉", "昏黄"], "sentence_starters": ["清晨的", "像往常一样，", "厨房里"], "teacher_tip": "提醒学生：先别急着抒情，越是普通的画面，后面的触动才越真实"},
+    {"shot_type": "中景", "writing_skill": "写一个具体的小动作，让情感开始渗出来", "example": "她转过身，把最大的那个鸡蛋放进我碗里，又若无其事地拿走了盘子里那个煎得有些破的。", "sensory_words": ["若无其事", "悄悄地", "轻轻放下", "不经意间", "顺手"], "sentence_starters": ["她转过身，", "不知不觉，", "我注意到"], "teacher_tip": "让学生找一个\"不经意\"的小动作，越不刻意，情感越真实"},
+    {"shot_type": "特写", "writing_skill": "放大触发情感的核心细节，克制地描写", "example": "我低头看着碗里那个完整的鸡蛋，又看了看她碗里破碎的那个，突然发现她鬓角不知何时已经悄悄爬上了几丝白发。", "sensory_words": ["悄悄爬上", "斑白", "粗糙", "微微颤动", "泛黄"], "sentence_starters": ["我低头看着", "就在这一刻，", "我忽然注意到"], "teacher_tip": "情感最浓的地方，句子反而要写得平静克制，不要用感叹号堆砌"},
+    {"shot_type": "近景", "writing_skill": "写内心真实的感受，避免直接喊口号", "example": "鼻子忽然有些发酸，我张了张嘴，最终什么也没说出口，只是把碗里的鸡蛋，又轻轻推回了她那边。", "sensory_words": ["鼻子发酸", "喉咙哽住", "说不出口", "眼睛湿润", "心里一暖"], "sentence_starters": ["鼻子忽然", "我张了张嘴，", "心里像是"], "teacher_tip": "严禁出现\"我永远不会忘记这份爱\"这类喊口号句子，用动作代替宣言"},
+    {"shot_type": "空镜", "writing_skill": "结尾借景物收束，留下悠长余韵", "example": "推开窗，晨光正一点点漫过窗台，把厨房的雾气染成了淡淡的金色，那碗热气，久久没有散去。", "sensory_words": ["漫过窗台", "染成金色", "久久不散", "暖意", "静静地"], "sentence_starters": ["推开窗，", "阳光", "那一缕热气"], "teacher_tip": "结尾不写道理，只写一个画面，让读者自己去感受余韵"}
+  ],
+  "common_mistakes": [
+    "结尾直接喊口号，比如「这就是母爱，我永远不会忘记」，情感被说穿了反而显得空洞、不真实",
+    "情感和事件脱节，堆砌\"感动\"\"温暖\"这类形容词，却没有具体的人物动作或细节支撑，读起来像是硬贴上去的标签"
+  ],
+  "upgrade_tip": "基础较好的学生可以尝试\"欲扬先抑\"——开头写一个自己曾经的误解或忽略（比如觉得妈妈唠叨），再通过细节推翻这个误解，让情感的转折更有力度"
+}
+];
+
+const genBtn = document.getElementById('genBtn');
+const btnLabel = document.getElementById('btnLabel');
+const resultArea = document.getElementById('resultArea');
+const demoSelect = document.getElementById('demoSelect');
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderResult(data){
+  const colors = ['#90c98d','#e8b93a','#e2694f','#6fa8c9'];
+  const curveHtml = (data.emotion_curve||[]).map((c,i)=>`
+    <div class="curve-node">
+      <div class="dot" style="background:${colors[i%4]}"></div>
+      <div class="curve-point">${escapeHtml(c.point||'')}</div>
+      <div class="curve-emotion" style="color:${colors[i%4]}">${escapeHtml(c.emotion||'')}</div>
+      <div class="curve-desc">${escapeHtml(c.description||'')}</div>
+    </div>
+  `).join('');
+
+  const shotsHtml = (data.shots||[]).map((s,i)=>`
+    <div class="shot">
+      <div class="shot-badge">
+        <div class="num">0${i+1}</div>
+        <div class="type">${escapeHtml(s.shot_type||'')}</div>
+      </div>
+      <div>
+        <div class="shot-skill">${escapeHtml(s.writing_skill||'')}</div>
+        <div class="shot-example">${escapeHtml(s.example||'')}</div>
+        <div class="chip-row">
+          <span class="chip-label">感官词</span>
+          ${(s.sensory_words||[]).map(w=>`<span class="chip sense">${escapeHtml(w)}</span>`).join('')}
+        </div>
+        <div class="chip-row">
+          <span class="chip-label">句子开头</span>
+          ${(s.sentence_starters||[]).map(w=>`<span class="chip">${escapeHtml(w)}</span>`).join('')}
+        </div>
+        <div class="tip-line"><b>教师提示</b><span>${escapeHtml(s.teacher_tip||'')}</span></div>
+      </div>
+    </div>
+  `).join('');
+
+  const mistakesHtml = (data.common_mistakes||[]).map(m=>`<li>${escapeHtml(m)}</li>`).join('');
+
+  resultArea.innerHTML = `
+    <div class="result">
+      <div class="result-meta">
+        <div class="result-title">${escapeHtml(data.meta.title)}</div>
+        <div class="result-tags">
+          <span class="tag">${escapeHtml(data.meta.grade)}</span>
+          <span class="tag">${escapeHtml(data.meta.word_count)}</span>
+        </div>
+      </div>
+      <div class="theme-box"><b>核心立意</b>${escapeHtml(data.theme||'')}</div>
+
+      <div class="section-label">情绪曲线</div>
+      <div class="curve">${curveHtml}</div>
+
+      <div class="section-label">五镜头写作分解</div>
+      ${shotsHtml}
+
+      <div class="section-label">常见误区</div>
+      <ul class="mistakes">${mistakesHtml}</ul>
+
+      <div class="upgrade"><b>进阶建议</b>${escapeHtml(data.upgrade_tip||'')}</div>
+    </div>
+  `;
+}
+
+function renderLoading(){
+  resultArea.innerHTML = `
+    <div class="card result-shell">
+      <div class="empty-icon"><div class="spin" style="border-color:rgba(20,22,31,0.15); border-top-color:var(--ink);"></div></div>
+      <div class="empty-title">正在生成分镜板…</div>
+      <div class="empty-sub">演示版模拟生成过程</div>
+    </div>
+  `;
+}
+
+genBtn.addEventListener('click', () => {
+  const idx = parseInt(demoSelect.value, 10);
+  genBtn.disabled = true;
+  btnLabel.textContent = '生成中…';
+  renderLoading();
+
+  setTimeout(() => {
+    renderResult(DEMO_DATA[idx]);
+    genBtn.disabled = false;
+    btnLabel.textContent = '生成分镜板';
+  }, 900);
+});
+</script>
+
+</body>
+</html>
